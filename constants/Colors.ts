@@ -1,26 +1,91 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+export const colors = {
+  primary: {
+    50: '#EFF4FF',
+    100: '#DFE8FF',
+    200: '#C5D4FF',
+    300: '#A3B9FF',
+    400: '#809CFF',
+    500: '#3E64FF', // Main primary color
+    600: '#3152DB',
+    700: '#2542B8',
+    800: '#1A3394',
+    900: '#10257A',
   },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+  secondary: {
+    50: '#EDFCFB',
+    100: '#D5F7F5',
+    200: '#AAEFEB',
+    300: '#80E6DF',
+    400: '#4ECDC4', // Main secondary color
+    500: '#33B3AB',
+    600: '#26918A',
+    700: '#1A706B',
+    800: '#115652',
+    900: '#0A3D3A',
   },
+  accent: {
+    50: '#FFEFEF',
+    100: '#FFDFDF',
+    200: '#FFBBBB',
+    300: '#FF9797',
+    400: '#FF6B6B', // Main accent color
+    500: '#FF4F4F',
+    600: '#FF3333',
+    700: '#FF1A1A',
+    800: '#FF0000',
+    900: '#CC0000',
+  },
+  success: {
+    50: '#E9F9EF',
+    100: '#D3F4E0',
+    200: '#A7E9C1',
+    300: '#7BDDA2',
+    400: '#4FD283',
+    500: '#23C764', // Main success color
+    600: '#1CA755',
+    700: '#158645',
+    800: '#0E6436',
+    900: '#07422A',
+  },
+  warning: {
+    50: '#FFF8EB',
+    100: '#FFF1D7',
+    200: '#FFE3AF',
+    300: '#FFD587',
+    400: '#FFC85F',
+    500: '#FFBA37', // Main warning color
+    600: '#FF9F00',
+    700: '#D98400',
+    800: '#B36D00',
+    900: '#8C5500',
+  },
+  error: {
+    50: '#FDEEEE',
+    100: '#FCDEDE',
+    200: '#F9BCBC',
+    300: '#F69B9B',
+    400: '#F37979',
+    500: '#F05757', // Main error color
+    600: '#EC3535',
+    700: '#D91919',
+    800: '#B31414',
+    900: '#910F0F',
+  },
+  neutral: {
+    50: '#F7F9FC',
+    100: '#EDF2F7',
+    200: '#E2E8F0',
+    300: '#CBD5E0',
+    400: '#A0AEC0',
+    500: '#718096',
+    600: '#4A5568',
+    700: '#2D3748',
+    800: '#1A202C',
+    900: '#0D1117',
+  },
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
 };
+
+export default colors;

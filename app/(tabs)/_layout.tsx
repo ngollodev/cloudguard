@@ -1,43 +1,88 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
+import { Tabs } from 'expo-router';
+import { useTheme } from '@/context/ThemeContext';
+import { Chrome as Home, Calendar, Bell, ClipboardList, Settings } from 'lucide-react-native';
 import { Platform } from 'react-native';
+import useNotificationStore from '@/stores/useNotificationStore';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
+  const { theme } = useTheme();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: theme.colors.card,
+          borderTopColor: theme.colors.border,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          height: Platform.OS === 'ios' ? 88 : 70,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontFamily: 'Inter-Medium',
+          marginTop: 0,
+          marginBottom: 4,
+        },
+        headerStyle: {
+          backgroundColor: theme.colors.card,
+          shadowColor: theme.dark ? 'transparent' : '#000',
+          shadowOpacity: 0.1,
+          shadowOffset: { width: 0, height: 1 },
+          shadowRadius: 5,
+          elevation: theme.dark ? 0 : 2,
+        },
+        headerTitleStyle: {
+          fontFamily: 'Inter-SemiBold',
+          fontSize: 18,
+          color: theme.colors.text,
+        },
+        headerTitleAlign: 'center',
+        headerShadowVisible: !theme.dark,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Dashboard',
+          tabBarLabel: 'Home',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="schedule"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Schedules',
+          tabBarIcon: ({ color, size }) => <Calendar size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: theme.colors.accent,
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, size }) => <ClipboardList size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>
