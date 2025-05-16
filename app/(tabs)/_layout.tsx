@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
-import { Chrome as Home, Calendar, Bell, ClipboardList, Settings } from 'lucide-react-native';
+import { Home, Calendar, Bell, ClipboardList, Settings, User } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import useNotificationStore from '@/stores/useNotificationStore';
 
@@ -76,6 +76,13 @@ export default function TabsLayout() {
         options={{
           title: 'History',
           tabBarIcon: ({ color, size }) => <ClipboardList size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
       <Tabs.Screen

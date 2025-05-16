@@ -46,7 +46,7 @@ export default function Login() {
         />
         <View style={styles.overlay} />
         <View style={styles.logoContainer}>
-          <Text style={[styles.logo, { color: theme.colors.primary }]}>Smart Rain</Text>
+          <Text style={[styles.logo, { color: theme.colors.primary }]}>CloudGuard.</Text>
           <Text style={[styles.tagline, { color: theme.colors.primary }]}>
             Keep your clothes dry, always.
           </Text>

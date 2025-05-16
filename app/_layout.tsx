@@ -4,8 +4,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import { ToastProvider } from '@/context/ToastContext';
 import { SplashScreen } from 'expo-router';
-import useAuthStore from '@/stores/useAuthStore';
+import useAuthStore from '@/stores/authStore';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -45,7 +46,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <RootLayoutNav initialRouteName={initialRouteName} />
+      <ToastProvider>
+        <RootLayoutNav initialRouteName={initialRouteName} />
+      </ToastProvider>
     </ThemeProvider>
   );
 }

@@ -5,29 +5,35 @@ import { useTheme } from '@/context/ThemeContext';
 import { borderRadius, fontSize, spacing } from '@/constants/theme';
 import Card from '@/components/shared/Card';
 import Button from '@/components/shared/Button';
+import Input from '@/components/shared/Input';
+import Modal from '@/components/shared/Modal';
 import { Plus, Calendar, Clock, ArrowUpDown, CreditCard as Edit, Trash2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import useScheduleStore from '@/stores/useScheduleStore';
-import { Schedule } from '@/types/schedule';
+import { Schedule, ScheduleType } from '@/types/schedule';
 import { format } from 'date-fns';
+import { useToast } from '@/context/ToastContext';
 
 export default function ScheduleScreen() {
   const { theme } = useTheme();
-  const { schedules, fetchSchedules, toggleSchedule, deleteSchedule, isLoading } = useScheduleStore();
+  const { schedules, fetchSchedules, toggleSchedule, deleteSchedule, createSchedule, updateSchedule, isLoading } = useScheduleStore();
+  const { showToast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [showAddSchedule, setShowAddSchedule] = useState(false);
-  const [newSchedule, setNewSchedule] = useState<{
-    name: string;
-    time: string;
-    type: string;
-    action: string;
-  }>({
+  const [showEditSchedule, setShowEditSchedule] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({
     name: '',
     time: '08:00',
-    type: 'daily',
-    action: 'extend',
+    type: 'daily' as ScheduleType,
+    action: 'extend' as 'extend' | 'retract',
   });
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    time?: string;
+  }>({});
 
   useEffect(() => {
     fetchSchedules();
@@ -43,14 +49,70 @@ export default function ScheduleScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    await toggleSchedule(id);
+    try {
+      await toggleSchedule(id);
+      showToast('Schedule status updated');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to update schedule', 'error');
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleDelete = async () => {
+    if (!selectedSchedule) return;
+    
+    try {
+      await deleteSchedule(selectedSchedule.id);
+      setShowDeleteConfirm(false);
+      setSelectedSchedule(null);
+      showToast('Schedule deleted successfully');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to delete schedule', 'error');
     }
-    await deleteSchedule(id);
+  };
+
+  const handleEdit = (schedule: Schedule) => {
+    setSelectedSchedule(schedule);
+    setScheduleForm({
+      name: schedule.name,
+      time: schedule.time,
+      type: schedule.type,
+      action: schedule.action,
+    });
+    setShowEditSchedule(true);
+  };
+
+  const validateForm = () => {
+    const errors: { name?: string; time?: string } = {};
+    if (!scheduleForm.name) errors.name = 'Name is required';
+    if (!scheduleForm.time) errors.time = 'Time is required';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      if (showEditSchedule && selectedSchedule) {
+        await updateSchedule(selectedSchedule.id, scheduleForm);
+        showToast('Schedule updated successfully');
+      } else {
+        await createSchedule(scheduleForm);
+        showToast('Schedule created successfully');
+      }
+      
+      setShowAddSchedule(false);
+      setShowEditSchedule(false);
+      setSelectedSchedule(null);
+      setScheduleForm({
+        name: '',
+        time: '08:00',
+        type: 'daily',
+        action: 'extend',
+      });
+    } catch (error: any) {
+      showToast(error.message || 'Failed to save schedule', 'error');
+    }
   };
 
   const getScheduleTypeText = (type: string) => {
@@ -69,6 +131,146 @@ export default function ScheduleScreen() {
         return type;
     }
   };
+
+  const renderScheduleForm = () => (
+    <>
+      <Input
+        label="Schedule Name"
+        placeholder="Enter schedule name"
+        value={scheduleForm.name}
+        onChangeText={(text) => setScheduleForm(prev => ({ ...prev, name: text }))}
+        error={formErrors.name}
+      />
+
+      <Input
+        label="Time"
+        placeholder="HH:MM"
+        value={scheduleForm.time}
+        onChangeText={(text) => setScheduleForm(prev => ({ ...prev, time: text }))}
+        error={formErrors.time}
+      />
+
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Type</Text>
+        <View style={styles.typeButtons}>
+          {(['daily', 'weekdays', 'weekends'] as ScheduleType[]).map((type) => (
+            <TouchableOpacity
+              key={type}
+              style={[
+                styles.typeButton,
+                {
+                  backgroundColor:
+                    scheduleForm.type === type
+                      ? theme.colors.primary
+                      : 'transparent',
+                  borderColor: theme.colors.primary,
+                },
+              ]}
+              onPress={() => setScheduleForm(prev => ({ ...prev, type }))}
+            >
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  {
+                    color:
+                      scheduleForm.type === type
+                        ? theme.colors.card
+                        : theme.colors.primary,
+                  },
+                ]}
+              >
+                {getScheduleTypeText(type)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Action</Text>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor:
+                  scheduleForm.action === 'extend'
+                    ? theme.colors.primary
+                    : 'transparent',
+                borderColor: theme.colors.primary,
+              },
+            ]}
+            onPress={() => setScheduleForm(prev => ({ ...prev, action: 'extend' }))}
+          >
+            <Text
+              style={[
+                styles.actionButtonText,
+                {
+                  color:
+                    scheduleForm.action === 'extend'
+                      ? theme.colors.card
+                      : theme.colors.primary,
+                },
+              ]}
+            >
+              Extend
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor:
+                  scheduleForm.action === 'retract'
+                    ? theme.colors.primary
+                    : 'transparent',
+                borderColor: theme.colors.primary,
+              },
+            ]}
+            onPress={() => setScheduleForm(prev => ({ ...prev, action: 'retract' }))}
+          >
+            <Text
+              style={[
+                styles.actionButtonText,
+                {
+                  color:
+                    scheduleForm.action === 'retract'
+                      ? theme.colors.card
+                      : theme.colors.primary,
+                },
+              ]}
+            >
+              Retract
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.modalButtons}>
+        <Button
+          title="Cancel"
+          variant="outline"
+          style={{ marginRight: spacing.md }}
+          onPress={() => {
+            setShowAddSchedule(false);
+            setShowEditSchedule(false);
+            setSelectedSchedule(null);
+            setScheduleForm({
+              name: '',
+              time: '08:00',
+              type: 'daily',
+              action: 'extend',
+            });
+          }}
+        />
+        <Button
+          title={showEditSchedule ? 'Update Schedule' : 'Add Schedule'}
+          onPress={handleSubmit}
+          isLoading={isLoading}
+        />
+      </View>
+    </>
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -135,16 +337,26 @@ export default function ScheduleScreen() {
                 />
               </View>
               <View style={styles.scheduleActions}>
-                <TouchableOpacity style={styles.editButton}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEdit(schedule)}
+                >
                   <Edit size={16} color={theme.colors.textSecondary} />
-                  <Text style={[styles.actionText, { color: theme.colors.textSecondary }]}>Edit</Text>
+                  <Text style={[styles.actionText, { color: theme.colors.textSecondary }]}>
+                    Edit
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.deleteButton}
-                  onPress={() => handleDelete(schedule.id)}
+                  onPress={() => {
+                    setSelectedSchedule(schedule);
+                    setShowDeleteConfirm(true);
+                  }}
                 >
                   <Trash2 size={16} color={theme.colors.error} />
-                  <Text style={[styles.actionText, { color: theme.colors.error }]}>Delete</Text>
+                  <Text style={[styles.actionText, { color: theme.colors.error }]}>
+                    Delete
+                  </Text>
                 </TouchableOpacity>
               </View>
             </Card>
@@ -152,29 +364,56 @@ export default function ScheduleScreen() {
         )}
       </ScrollView>
 
-      {/* This would be a modal in a real app */}
-      {showAddSchedule && (
-        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <Card style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add New Schedule</Text>
-            <Text style={[styles.modalHint, { color: theme.colors.textSecondary }]}>
-              This would be a form in a real app
-            </Text>
-            <View style={styles.modalButtons}>
-              <Button
-                title="Cancel"
-                variant="outline"
-                style={{ marginRight: spacing.md }}
-                onPress={() => setShowAddSchedule(false)}
-              />
-              <Button
-                title="Add Schedule"
-                onPress={() => setShowAddSchedule(false)}
-              />
-            </View>
-          </Card>
+      <Modal
+        isVisible={showAddSchedule || showEditSchedule}
+        onClose={() => {
+          setShowAddSchedule(false);
+          setShowEditSchedule(false);
+          setSelectedSchedule(null);
+          setScheduleForm({
+            name: '',
+            time: '08:00',
+            type: 'daily',
+            action: 'extend',
+          });
+        }}
+        title={showEditSchedule ? 'Edit Schedule' : 'Add New Schedule'}
+      >
+        {renderScheduleForm()}
+      </Modal>
+
+      <Modal
+        isVisible={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setSelectedSchedule(null);
+        }}
+        title="Delete Schedule"
+      >
+        <Text style={[styles.deleteText, { color: theme.colors.text }]}>
+          Are you sure you want to delete this schedule?
+        </Text>
+        <Text style={[styles.deleteSubtext, { color: theme.colors.textSecondary }]}>
+          This action cannot be undone.
+        </Text>
+        <View style={styles.modalButtons}>
+          <Button
+            title="Cancel"
+            variant="outline"
+            style={{ marginRight: spacing.md }}
+            onPress={() => {
+              setShowDeleteConfirm(false);
+              setSelectedSchedule(null);
+            }}
+          />
+          <Button
+            title="Delete"
+            variant="danger"
+            onPress={handleDelete}
+            isLoading={isLoading}
+          />
         </View>
-      )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -275,31 +514,60 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     marginLeft: spacing.xs,
   },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+  formGroup: {
+    marginBottom: spacing.lg,
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Inter-Medium',
+    marginBottom: spacing.xs,
+  },
+  typeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: spacing.xs,
+  },
+  typeButton: {
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    marginRight: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  typeButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Inter-Medium',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    marginTop: spacing.xs,
+  },
+  actionButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
+    marginRight: spacing.xs,
   },
-  modalContent: {
-    width: '80%',
-    padding: spacing.lg,
-  },
-  modalTitle: {
-    fontSize: fontSize.xl,
-    fontFamily: 'Inter-SemiBold',
-    marginBottom: spacing.lg,
-  },
-  modalHint: {
-    fontSize: fontSize.md,
-    fontFamily: 'Inter-Regular',
-    marginBottom: spacing.lg,
+  actionButtonText: {
+    fontSize: fontSize.sm,
+    fontFamily: 'Inter-Medium',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    marginTop: spacing.xl,
+  },
+  deleteText: {
+    fontSize: fontSize.lg,
+    fontFamily: 'Inter-Medium',
+    marginBottom: spacing.xs,
+  },
+  deleteSubtext: {
+    fontSize: fontSize.md,
+    fontFamily: 'Inter-Regular',
+    marginBottom: spacing.xl,
   },
 });

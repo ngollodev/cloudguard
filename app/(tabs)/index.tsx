@@ -49,17 +49,19 @@ export default function Dashboard() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }
+    ]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 88 : 70 }}
       >
         <View style={styles.header}>
           <View>
             <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Welcome to</Text>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Smart Rain</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>CloudGuard.</Text>
           </View>
           <View style={styles.statusContainer}>
             {device.isOnline ? (

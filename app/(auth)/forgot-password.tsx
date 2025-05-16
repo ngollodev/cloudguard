@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: spacing.xl,
+    marginTop: spacing.xxl,
   },
   header: {
     marginBottom: spacing.xl,

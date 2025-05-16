@@ -10,7 +10,7 @@ const mockLogin = async (credentials: LoginCredentials) => {
       resolve({
         user: {
           id: 1,
-          name: 'ngollo.dev',
+          name: 'John Doe',
           email: credentials.email,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -51,36 +51,18 @@ interface AuthStore extends AuthState {
   logout: () => Promise<void>;
   resetPassword: (data: ResetPasswordData) => Promise<void>;
   checkAuth: () => Promise<void>;
+  updateProfile: (data: { name: string; email: string }) => Promise<void>;
+  changePassword: (data: { current_password: string; password: string; password_confirmation: string }) => Promise<void>;
 }
 
-interface UpdateProfileData {
-  [key: string]: any;
-}
-
-interface ChangePasswordData {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-interface UseAuthStoreActions {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
-  resetPassword: (data: ResetPasswordData) => Promise<void>;
-  checkAuth: () => Promise<void>;
-  updateProfile: (data: UpdateProfileData) => Promise<void>;
-  changePassword: (data: ChangePasswordData) => Promise<void>;
-}
-
-const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
+const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
   isAuthenticated: false,
   error: null,
 
-  login: async (credentials: LoginCredentials): Promise<void> => {
+  login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
       const response: any = await mockLogin(credentials);
@@ -103,7 +85,7 @@ const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
     }
   },
 
-  register: async (data: RegisterData): Promise<void> => {
+  register: async (data) => {
     set({ isLoading: true, error: null });
     try {
       // Mock registration success
@@ -118,7 +100,7 @@ const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
     }
   },
 
-  logout: async (): Promise<void> => {
+  logout: async () => {
     set({ isLoading: true });
     try {
       await secureStorage.removeItem('auth_token');
@@ -137,7 +119,7 @@ const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
     }
   },
 
-  resetPassword: async (data: ResetPasswordData): Promise<void> => {
+  resetPassword: async (data) => {
     set({ isLoading: true, error: null });
     try {
       // Mock password reset success
@@ -152,7 +134,7 @@ const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
     }
   },
 
-  checkAuth: async (): Promise<void> => {
+  checkAuth: async () => {
     set({ isLoading: true });
     try {
       const token = await secureStorage.getItem('auth_token');
@@ -181,33 +163,49 @@ const useAuthStore = create<AuthState & UseAuthStoreActions>((set, get) => ({
       });
     }
   },
-  updateProfile: async (data: UpdateProfileData): Promise<void> => {
+
+  updateProfile: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const user = { ...get().user, ...data };
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const user = {
+        ...get().user,
+        ...data,
+        updated_at: new Date().toISOString(),
+      };
+      
       await secureStorage.setItem('user', JSON.stringify(user));
-      set({ user, isLoading: false });
-    } catch (error: any) {
-      set({ 
-        isLoading: false, 
-        error: error.message || 'Failed to update profile' 
+      
+      set({
+        user,
+        isLoading: false,
       });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.message || 'Failed to update profile',
+      });
+      throw error;
     }
   },
-  changePassword: async (data: ChangePasswordData ): Promise<void> => {
+
+  changePassword: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      // Mock password change success
-      setTimeout(() => {
-        set({ isLoading: false });
-      }, 1000);
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      set({ isLoading: false });
     } catch (error: any) {
-      set({ 
-        isLoading: false, 
-        error: error.message || 'Failed to change password' 
+      set({
+        isLoading: false,
+        error: error.message || 'Failed to change password',
       });
+      throw error;
     }
-  }
+  },
 }));
 
 export default useAuthStore;
