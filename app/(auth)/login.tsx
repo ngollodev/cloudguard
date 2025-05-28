@@ -1,38 +1,135 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Linking } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
-import Theme, { fontSize, spacing } from '@/constants/theme';
+import { fontSize, spacing } from '@/constants/theme';
 import Button from '@/components/shared/Button';
 import Input from '@/components/shared/Input';
 import { Mail, Lock } from 'lucide-react-native';
 import useAuthStore from '@/stores/useAuthStore';
-import colors from '@/constants/colors';
 
 export default function Login() {
   const { theme } = useTheme();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  const { login, isLoading, error } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
+
+  // Clear any errors when component mounts
+  useEffect(() => {
+    clearError();
+  }, []);
+
+  // Clear login error whenever email or password changes
+  useEffect(() => {
+    if (loginError) setLoginError(null);
+  }, [email, password]);
 
   const validate = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: {email?: string; password?: string} = {};
     if (!email) newErrors.email = 'Email is required';
+    else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = 'Please enter a valid email';
+
     if (!password) newErrors.password = 'Password is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const showNetworkErrorAlert = (message: string) => {
+    Alert.alert(
+      "Connection Error",
+      message,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Settings", onPress: () => Linking.openSettings() }
+      ]
+    );
+  };
+
   const handleLogin = async () => {
     if (validate()) {
       try {
+        // Clear any previous errors
+        setLoginError(null);
+        setErrors({});
         await login({ email, password });
         router.replace('/(tabs)');
-      } catch (error) {
-        // Error is handled by the store
+      } catch (error: any) {
+        console.log('Login error details:', error.response?.status, error.response?.data);
+
+        // Show error modal for network issues
+        if (!error.response) {
+          const errorMsg = error.message || 'Unable to connect to the server. Please check your internet connection and try again.';
+
+          // Handle different network errors
+          if (errorMsg.includes('API server could not be reached')) {
+            showNetworkErrorAlert('The API server could not be reached. Please check your network connection and ensure the server is running.');
+          } else if (errorMsg.includes('timed out')) {
+            showNetworkErrorAlert('The connection timed out. The server might be overloaded or your network connection is unstable.');
+          } else {
+            showNetworkErrorAlert(errorMsg);
+          }
+          return;
+        }
+
+        // Handle 401 Unauthorized - Check for specific validation messages
+        if (error.response?.status === 401) {
+          // Extract field-specific errors from the response
+          const responseData = error.response?.data || {};
+          const validationErrors = responseData.errors || {};
+          const newErrors: {email?: string; password?: string} = {};
+
+          // Handle email-specific errors
+          if (validationErrors.email && validationErrors.email.length > 0) {
+            newErrors.email = validationErrors.email[0];
+          }
+
+          // Handle password-specific errors
+          if (validationErrors.password && validationErrors.password.length > 0) {
+            newErrors.password = validationErrors.password[0];
+          }
+
+          // Set field errors if we have any
+          if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+          }
+          // Show the main error message if available
+          else if (responseData.message) {
+            setLoginError(responseData.message);
+          }
+          // Fallback error message
+          else {
+            setLoginError('Invalid email or password. Please try again.');
+          }
+        }
+        // Handle validation errors from Laravel (usually 422)
+        else if (error.response?.status === 422) {
+          const backendErrors = error.response.data.errors || error.response.data.formErrors || {};
+          const newErrors: {email?: string; password?: string} = {};
+
+          if (backendErrors.email && backendErrors.email.length > 0) {
+            newErrors.email = backendErrors.email[0];
+          }
+
+          if (backendErrors.password && backendErrors.password.length > 0) {
+            newErrors.password = backendErrors.password[0];
+          }
+
+          if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+          } else if (error.response?.data?.message) {
+            setLoginError(error.response.data.message);
+          }
+        }
+        // Handle other errors
+        else if (error.response?.data?.message) {
+          setLoginError(error.response.data.message);
+        } else {
+          setLoginError('An unexpected error occurred. Please try again.');
+        }
       }
     }
   };
@@ -46,8 +143,8 @@ export default function Login() {
         />
         <View style={styles.overlay} />
         <View style={styles.logoContainer}>
-          <Text style={[styles.logo, { color: theme.colors.primary }]}>CloudGuard.</Text>
-          <Text style={[styles.tagline, { color: theme.colors.primary }]}>
+          <Text style={[styles.logo, { color: theme.colors.card }]}>CloudGuard</Text>
+          <Text style={[styles.tagline, { color: theme.colors.card }]}>
             Keep your clothes dry, always.
           </Text>
         </View>
@@ -59,10 +156,10 @@ export default function Login() {
           Sign in to your account
         </Text>
 
-        {error && (
+        {(loginError || (error && !Object.keys(errors).length)) && (
           <View style={styles.errorContainer}>
             <Text style={[styles.errorText, { color: theme.colors.error }]}>
-              {error}
+              {loginError || error}
             </Text>
           </View>
         )}
@@ -73,7 +170,10 @@ export default function Login() {
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text: string) => {
+            setEmail(text);
+            if (errors.email) setErrors({...errors, email: undefined});
+          }}
           error={errors.email}
           leftIcon={<Mail size={18} color={theme.colors.textSecondary} />}
         />
@@ -83,7 +183,10 @@ export default function Login() {
           placeholder="Enter your password"
           secureTextEntry
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text: string) => {
+            setPassword(text);
+            if (errors.password) setErrors({...errors, password: undefined});
+          }}
           error={errors.password}
           leftIcon={<Lock size={18} color={theme.colors.textSecondary} />}
         />
@@ -158,7 +261,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
     marginTop: spacing.xs,
-    marginBottom: spacing.sm
   },
   formContainer: {
     flex: 1,

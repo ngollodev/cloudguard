@@ -274,8 +274,15 @@ export default function ScheduleScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Schedules</Text>
+      <View style={[styles.header, 
+        {
+          marginTop: -55,
+        }]}>
+        <Text style={[styles.title, 
+          { 
+            color: theme.colors.text,
+
+          }]}>Schedules</Text>
         <TouchableOpacity 
           style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
           onPress={() => setShowAddSchedule(true)}

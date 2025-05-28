@@ -134,6 +134,7 @@ const Button: React.FC<ButtonProps> = ({
           {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
           <Text style={[getTextStyles(), textStyle]}>{title}</Text>
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+          {/* Ensure title is always wrapped in Text component */}
         </>
       )}
     </TouchableOpacity>

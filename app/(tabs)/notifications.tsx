@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/context/ThemeContext';
-import { borderRadius, fontSize, spacing } from '@/constants/theme';
-import Card from '@/components/shared/Card';
-import Button from '@/components/shared/Button';
-import { Bell, BellOff, Check, Trash2 } from 'lucide-react-native';
-import useNotificationStore from '@/stores/useNotificationStore';
 import { format } from 'date-fns';
+import { Bell, BellOff, Check, Trash2 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Card from '../../components/shared/Card';
+import { fontSize, spacing } from '../../constants/theme';
+import { useTheme as useThemeContext } from '../../context/ThemeContext';
+import useNotificationStore from '../../stores/useNotificationStore';
 
 export default function NotificationsScreen() {
-  const { theme } = useTheme();
+  const { theme } = useThemeContext();
   const { notifications, fetchNotifications, markAsRead, markAllAsRead, clearAllNotifications, isLoading } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -68,7 +67,11 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
+      <View style={[styles.header,
+        {
+          marginTop: -55,
+        }
+      ]}>
         <Text style={[styles.title, { color: theme.colors.text }]}>Notifications</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity 
@@ -115,14 +118,14 @@ export default function NotificationsScreen() {
               onPress={() => markAsRead(notification.id)}
               activeOpacity={0.7}
             >
-              <Card 
-                style={[
-                  styles.notificationCard,
-                  !notification.isRead && {
-                    borderLeftWidth: 3,
-                    borderLeftColor: getSeverityColor(notification.severity),
-                  },
-                ]}
+              <Card
+                style={{
+                  ...styles.notificationCard,
+                  ...(!notification.isRead && {
+                    borderLeftWidth: 4,
+                    borderLeftColor: theme.colors.primary
+                  })
+                }}
               >
                 <View style={styles.notificationHeader}>
                   {getNotificationIcon(notification.type)}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
-import { Home, Calendar, Bell, ClipboardList, Settings, User } from 'lucide-react-native';
+import { Chrome as Home, Calendar, Bell, ClipboardList, Settings, User } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import useNotificationStore from '@/stores/useNotificationStore';
 

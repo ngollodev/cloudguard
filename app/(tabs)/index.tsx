@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/context/ThemeContext';
-import { borderRadius, fontSize, spacing } from '@/constants/theme';
-import Card from '@/components/shared/Card';
 import Button from '@/components/shared/Button';
+import Card from '@/components/shared/Card';
 import StatusBadge from '@/components/shared/StatusBadge';
-import { Cloud, CloudRain, Battery, Gauge, RefreshCw, CloudOff, Info } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { borderRadius, fontSize, spacing } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import useDeviceStore from '@/stores/useDeviceStore';
 import useWeatherStore from '@/stores/useWeatherStore';
 import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
+import { Battery, Cloud, CloudOff, CloudRain, Gauge, Info, RefreshCw } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Dashboard() {
   const { theme, isDark } = useTheme();
@@ -49,19 +48,17 @@ export default function Dashboard() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }
-    ]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 88 : 70 }}
       >
         <View style={styles.header}>
           <View>
             <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Welcome to</Text>
-            <Text style={[styles.title, { color: theme.colors.text }]}>CloudGuard.</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>CloudGuard</Text>
           </View>
           <View style={styles.statusContainer}>
             {device.isOnline ? (

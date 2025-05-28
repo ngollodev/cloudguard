@@ -5,8 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { fontSize, spacing } from '@/constants/theme';
 import Button from '@/components/shared/Button';
 import Input from '@/components/shared/Input';
-import { Mail } from 'lucide-react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import { Mail, ChevronLeft } from 'lucide-react-native';
 import useAuthStore from '@/stores/useAuthStore';
 
 export default function ForgotPassword() {
@@ -114,7 +113,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: spacing.xl,
-    marginTop: spacing.xxl,
   },
   header: {
     marginBottom: spacing.xl,

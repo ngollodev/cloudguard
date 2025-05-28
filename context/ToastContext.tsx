@@ -1,7 +1,7 @@
 import Toast from '@/components/shared/Toast';
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
-type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info';
 
 interface ToastContextType {
   showToast: (message: string, type?: ToastType) => void;
@@ -13,7 +13,7 @@ interface ToastContextType {
   };
 }
 
-const ToastContext = createContext<ToastContextType>({
+export const ToastContext = createContext<ToastContextType>({  // Add 'export' here
   showToast: () => {},
   hideToast: () => {},
   toast: {
